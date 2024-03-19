@@ -7,6 +7,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import models.ForLocation.Location;
+import models.ForPointsVisitedByAnimal.PointsVisitedByAnimal;
 import org.hibernate.Session;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
@@ -24,7 +25,24 @@ public class LocationManagerServiceImpl implements LocationManagerService {
     }
 
     Configuration configuration = new Configuration().configure("hibernate.cfg.xml")
-            .addAnnotatedClass(Location.class);
+            .addAnnotatedClass(Location.class)
+            .addAnnotatedClass(PointsVisitedByAnimal.class);
+
+    @Override
+    public boolean visitedOrNot(Integer idLocation){
+        Session session = configuration.buildSessionFactory().openSession();
+        session.beginTransaction();
+
+        Query queryToCheckVisitedOrNot = session.createQuery("FROM PointsVisitedByAnimal pvba JOIN pvba.location l WHERE l.id = :locationPointId");
+        queryToCheckVisitedOrNot.setParameter("locationPointId", idLocation);
+
+        List<PointsVisitedByAnimal> listToCheckVisitedOrNot = queryToCheckVisitedOrNot.list();
+        session.getTransaction().commit();
+        session.close();
+
+        // true
+        return !listToCheckVisitedOrNot.isEmpty();
+    }
 
     @Override
     public boolean checkLocationId(String locationParam){

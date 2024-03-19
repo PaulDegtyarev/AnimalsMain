@@ -126,11 +126,15 @@ public class LocationRoute {
             if (bufferAsyncResult.succeeded()){
                 JsonObject updateInfoAboutLocation = new JsonObject(bufferAsyncResult.result());
                 String idLocationParam = routingContext.pathParam("pointId");
+                Integer idLocation = Integer.parseInt(idLocationParam);
 
                 boolean idIsValid = locationManagerService.checkLocationId(idLocationParam);
                 boolean dataIsValid = locationManagerService.dataIsValid(updateInfoAboutLocation);
+                boolean visitedByAnimal = locationManagerService.visitedOrNot(idLocation);
 
-                if ()
+                out.println(visitedByAnimal);
+
+//                if ()
             }
         });
     }

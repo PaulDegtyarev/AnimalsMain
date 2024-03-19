@@ -11,6 +11,8 @@ public interface LocationManagerService {
 
     static LocationManagerService create(LocationPersistence locationPersistence){return new LocationManagerServiceImpl(locationPersistence);}
 
+    boolean visitedOrNot(Integer idLocation);
+
     boolean checkLocationId(String locationParam);
 
     boolean emptyOrNot(Integer idForSearch);
