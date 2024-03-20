@@ -6,7 +6,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
-import models.ForAnimal_Location.Animal_Location;
+import models.ForAnimal.Animal;
 import models.ForLocation.Location;
 import models.ForPointsVisitedByAnimal.PointsVisitedByAnimal;
 import models.ForZonePoints.ZonePoints;
@@ -32,17 +32,17 @@ public class LocationManagerServiceImpl implements LocationManagerService {
             .addAnnotatedClass(Location.class)
             .addAnnotatedClass(PointsVisitedByAnimal.class)
             .addAnnotatedClass(ZonePoints.class)
-            .addAnnotatedClass(Animal_Location.class);
+            .addAnnotatedClass(Animal.class);
 
     @Override
     public boolean linkedWithAnimal(Integer locationIdForDelete){
         Session session = configuration.buildSessionFactory().openSession();
         session.beginTransaction();
 
-        Query queryToCheckLindkWithAnimal = session.createQuery("FROM Animal_Location WHERE location_id = :locationIdForDelete");
+        Query queryToCheckLindkWithAnimal = session.createQuery("FROM Animal WHERE chippinglocationid = :locationIdForDelete");
         queryToCheckLindkWithAnimal.setParameter("locationIdForDelete", locationIdForDelete);
 
-        List<Animal_Location> listToCheckLindkWithAnimal = queryToCheckLindkWithAnimal.list();
+        List<Animal> listToCheckLindkWithAnimal = queryToCheckLindkWithAnimal.list();
 
         //true
         return !listToCheckLindkWithAnimal.isEmpty();

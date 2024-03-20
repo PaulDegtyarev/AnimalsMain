@@ -2,6 +2,7 @@ package models.ForAnimal;
 
 
 import jakarta.persistence.*;
+import models.ForLocation.Location;
 import models.ForUsers.Users;
 
 import java.io.Serializable;
@@ -40,8 +41,14 @@ public class Animal implements Serializable {
     @JoinColumn(name = "chipperid", referencedColumnName = "id")
     public Users chipperid;
 
-    @Column(name = "chippinglocationid")
-    public Integer chippinglocationid;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "animal_location",
+            joinColumns = @JoinColumn(name = "animal_id"),
+            inverseJoinColumns = @JoinColumn(name = "location_id")
+    )
+    public Set<Location> chippinglocations;
+
 
     @Column(name = "visitedLocations")
     public BigInteger[] visitedlocations;
@@ -85,7 +92,7 @@ public class Animal implements Serializable {
         return chipperid;
     }
 
-    public Integer getChippingLocationId() {
+    public Location getChippingLocationId() {
         return chippinglocationid;
     }
 
