@@ -1,5 +1,6 @@
 package routing.forLocation;
 
+import io.swagger.models.auth.In;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -45,6 +46,8 @@ public class LocationRoute {
         locationRouter.put("/locations/:pointId").handler(this::updateLocationById);
         locationRouter.put("/locations/").handler(this::updateLocationById);
 
+        locationRouter.delete("/locations/:pointId").handler(this::deleteLocationById);
+        locationRouter.delete("/locations/").handler(this::deleteLocationById);
     }
 
     private void getLocationById(RoutingContext routingContext) {
@@ -123,20 +126,108 @@ public class LocationRoute {
 
     private void updateLocationById(RoutingContext routingContext) {
         routingContext.request().body().onComplete(bufferAsyncResult -> {
-            if (bufferAsyncResult.succeeded()){
+            if (bufferAsyncResult.succeeded()) {
                 JsonObject updateInfoAboutLocation = new JsonObject(bufferAsyncResult.result());
                 String idLocationParam = routingContext.pathParam("pointId");
-                Integer idLocation = Integer.parseInt(idLocationParam);
+                String userToken = routingContext.request().getHeader("token");
 
                 boolean idIsValid = locationManagerService.checkLocationId(idLocationParam);
+                if (!idIsValid){
+                    routingContext.response().setStatusCode(400).end();
+                    return;
+                }
+
                 boolean dataIsValid = locationManagerService.dataIsValid(updateInfoAboutLocation);
+                Integer idLocation = Integer.parseInt(idLocationParam);
                 boolean visitedByAnimal = locationManagerService.visitedOrNot(idLocation);
+                boolean chippingPoint = locationManagerService.chippingOrNot(updateInfoAboutLocation);
 
-                out.println(visitedByAnimal);
+                if (!dataIsValid || visitedByAnimal || chippingPoint) {
+                    routingContext.response().setStatusCode(400).end();
+                    return;
+                }
 
-//                if ()
+                boolean isAuthorize = usersManagerService.checkUserToAuthorize(userToken);
+                if (!isAuthorize) {
+                    routingContext.response().setStatusCode(401).end();
+                    return;
+                }
+
+                String userRole = usersManagerService.checkRole(userToken);
+                if (userRole.equals("USER")){
+                    routingContext.response().setStatusCode(403).end();
+                    return;
+                }
+
+                boolean notFound = locationManagerService.emptyOrNot(idLocation);
+                if (notFound){
+                    routingContext.response().setStatusCode(404).end();
+                    return;
+                }
+
+                boolean pointIsBusy = locationManagerService.coordIsFree(updateInfoAboutLocation);
+                if (!pointIsBusy){
+                    routingContext.response().setStatusCode(409).end();
+                    return;
+                }
+                else {
+                    locationManagerService.updateLocationById(idLocation, updateInfoAboutLocation, request, resultHandler ->{
+                        if (resultHandler.succeeded()){
+                            ServiceResponse response = resultHandler.result();
+                            routingContext.response().setStatusCode(200).end(response.getPayload().toString());
+                        }
+                    });
+                }
+
             }
         });
     }
 
+    private void deleteLocationById(RoutingContext routingContext) {
+        routingContext.request().body().onComplete(bufferAsyncResult -> {
+            if (bufferAsyncResult.succeeded()){
+                String locationIdForDeleteParam = routingContext.pathParam("pointId");
+                String userToken = routingContext.request().getHeader("token");
+
+                boolean idIsValid = locationManagerService.checkLocationId(locationIdForDeleteParam);
+                if (!idIsValid) {
+                    routingContext.response().setStatusCode(400).end();
+                    return;
+                }
+
+                Integer locationIdForDelete = Integer.parseInt(locationIdForDeleteParam);
+                boolean linkedWithAnimal = locationManagerService.linkedWithAnimal(locationIdForDelete);
+                if (linkedWithAnimal){
+                    routingContext.response().setStatusCode(400).end();
+                    return;
+                }
+
+                boolean isAuthorize = usersManagerService.checkUserToAuthorize(userToken);
+                if (!isAuthorize){
+                    routingContext.response().setStatusCode(401).end();
+                    return;
+                }
+
+                String userRole = usersManagerService.checkRole(userToken);
+                if (!userRole.equals("ADMIN")){
+                    routingContext.response().setStatusCode(403).end();
+                    return;
+                }
+
+                boolean notFound = locationManagerService.emptyOrNot(locationIdForDelete);
+                if (notFound){
+                    routingContext.response().setStatusCode(404).end();
+                    return;
+                }
+                else {
+                    locationManagerService.deleteLocationById(locationIdForDelete, request, resultHandler -> {
+                        if (resultHandler.succeeded()){
+                            ServiceResponse response = resultHandler.result();
+                            routingContext.response().setStatusCode(200).end(response.getPayload().toString());
+                        }
+                    });
+                }
+            }
+        });
+    }
 }

@@ -11,6 +11,10 @@ public interface LocationManagerService {
 
     static LocationManagerService create(LocationPersistence locationPersistence){return new LocationManagerServiceImpl(locationPersistence);}
 
+    boolean linkedWithAnimal(Integer locationIdForDelete);
+
+    boolean chippingOrNot(JsonObject info);
+
     boolean visitedOrNot(Integer idLocation);
 
     boolean checkLocationId(String locationParam);
@@ -28,4 +32,13 @@ public interface LocationManagerService {
     void addLocation(JsonObject info,
                      ServiceRequest request,
                      Handler<AsyncResult<ServiceResponse>> resultHandler);
+
+    void updateLocationById(Integer idLocationForUpdate,
+                            JsonObject infoForUpdate,
+                            ServiceRequest request,
+                            Handler<AsyncResult<ServiceResponse>> resultHandler);
+
+    void deleteLocationById(Integer idLocationForDelete,
+                            ServiceRequest request,
+                            Handler<AsyncResult<ServiceResponse>> resultHandler);
 }

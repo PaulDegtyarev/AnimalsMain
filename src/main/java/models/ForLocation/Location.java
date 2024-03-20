@@ -20,9 +20,6 @@ public class Location implements Serializable {
     @Column(name = "longitude")
     private Double longitude;
 
-//    @OneToMany
-//    private List<PointsVisitedByAnimal> point_visited_by_animal_id;
-
 
     @Fluent public Integer getLocationId(){
         return this.id;

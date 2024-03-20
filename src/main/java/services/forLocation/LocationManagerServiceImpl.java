@@ -6,8 +6,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
+import models.ForAnimal_Location.Animal_Location;
 import models.ForLocation.Location;
 import models.ForPointsVisitedByAnimal.PointsVisitedByAnimal;
+import models.ForZonePoints.ZonePoints;
 import org.hibernate.Session;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
@@ -15,6 +17,8 @@ import persistance.ForLocation.LocationPersistence;
 
 import java.util.List;
 import java.util.Optional;
+
+import static java.lang.System.out;
 
 public class LocationManagerServiceImpl implements LocationManagerService {
 
@@ -26,7 +30,42 @@ public class LocationManagerServiceImpl implements LocationManagerService {
 
     Configuration configuration = new Configuration().configure("hibernate.cfg.xml")
             .addAnnotatedClass(Location.class)
-            .addAnnotatedClass(PointsVisitedByAnimal.class);
+            .addAnnotatedClass(PointsVisitedByAnimal.class)
+            .addAnnotatedClass(ZonePoints.class)
+            .addAnnotatedClass(Animal_Location.class);
+
+    @Override
+    public boolean linkedWithAnimal(Integer locationIdForDelete){
+        Session session = configuration.buildSessionFactory().openSession();
+        session.beginTransaction();
+
+        Query queryToCheckLindkWithAnimal = session.createQuery("FROM Animal_Location WHERE location_id = :locationIdForDelete");
+        queryToCheckLindkWithAnimal.setParameter("locationIdForDelete", locationIdForDelete);
+
+        List<Animal_Location> listToCheckLindkWithAnimal = queryToCheckLindkWithAnimal.list();
+
+        //true
+        return !listToCheckLindkWithAnimal.isEmpty();
+    }
+
+    @Override
+    public boolean chippingOrNot(JsonObject info){
+        Double latitude = info.getDouble("latitude");
+        Double longitude = info.getDouble("longitude");
+
+        Session session = configuration.buildSessionFactory().openSession();
+        session.beginTransaction();
+
+        Query queryToCheckChippingOrNot = session.createQuery("FROM ZonePoints WHERE latitude = :latitude AND longitude = :longitude");
+        queryToCheckChippingOrNot.setParameter("latitude", latitude);
+        queryToCheckChippingOrNot.setParameter("longitude", longitude);
+
+        List<ZonePoints> listToCheckChippingOrNot = queryToCheckChippingOrNot.list();
+        out.println(listToCheckChippingOrNot);
+
+        //true
+        return !listToCheckChippingOrNot.isEmpty();
+    }
 
     @Override
     public boolean visitedOrNot(Integer idLocation){
@@ -37,6 +76,7 @@ public class LocationManagerServiceImpl implements LocationManagerService {
         queryToCheckVisitedOrNot.setParameter("locationPointId", idLocation);
 
         List<PointsVisitedByAnimal> listToCheckVisitedOrNot = queryToCheckVisitedOrNot.list();
+        out.println(listToCheckVisitedOrNot);
         session.getTransaction().commit();
         session.close();
 
@@ -65,6 +105,9 @@ public class LocationManagerServiceImpl implements LocationManagerService {
         session.getTransaction().commit();
         session.close();
 
+        out.println(locationList);
+
+        //false
         return locationList.isEmpty();
     }
 
@@ -119,6 +162,33 @@ public class LocationManagerServiceImpl implements LocationManagerService {
         if (l.isPresent()) {
             JsonObject locationJson = JsonObject.mapFrom(l.get());
             resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(locationJson)));
+        }
+    }
+
+    @Override
+    public void updateLocationById(Integer idLocationForUpdate,
+                                   JsonObject infoForUpdate,
+                                   ServiceRequest request,
+                                   Handler<AsyncResult<ServiceResponse>> resultHandler){
+        Optional<Location> l = locationPersistence.updateLocationById(idLocationForUpdate, infoForUpdate);
+        if (l.isPresent()) {
+            JsonObject locationInfoJson = JsonObject.mapFrom(l.get());
+            resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(locationInfoJson)));
+        }
+    }
+
+    @Override
+    public void deleteLocationById(Integer idLocationForDelete,
+                                   ServiceRequest request,
+                                   Handler<AsyncResult<ServiceResponse>> resultHandler){
+        Optional<Location> l = locationPersistence.deleteLocationById(idLocationForDelete);
+
+        if (l.isPresent()){
+            JsonObject locationInfoJson = JsonObject.mapFrom(l.get());
+            locationInfoJson.remove("id");
+            locationInfoJson.remove("latitude");
+            locationInfoJson.remove("longitude");
+            resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(locationInfoJson)));
         }
     }
 }

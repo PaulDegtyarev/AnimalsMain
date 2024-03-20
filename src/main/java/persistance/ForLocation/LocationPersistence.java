@@ -14,4 +14,8 @@ public interface LocationPersistence {
     Optional<JsonObject> getLocationById(Integer locationId);
 
     Optional<Location> addLocation(JsonObject infoAboutNewLocation);
+
+    Optional<Location> updateLocationById(Integer idLocationForUpdate, JsonObject updateInfo);
+
+    Optional<Location> deleteLocationById(Integer locationIdForDelete);
 }

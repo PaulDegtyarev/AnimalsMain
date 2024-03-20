@@ -16,6 +16,4 @@ public class ZoneAndPoints implements Serializable {
 
     @Column(name = "point_id")
     private ZonePoints point_id;
-
-
 }
