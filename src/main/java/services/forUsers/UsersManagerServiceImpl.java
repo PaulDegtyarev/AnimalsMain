@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import models.ForAnimal.Animal;
+import models.ForLocation.Location;
 import models.ForUsers.Users;
 import org.hibernate.Session;
 import org.hibernate.cfg.Configuration;
@@ -27,7 +28,8 @@ public class UsersManagerServiceImpl implements UsersManagerService {
 
     Configuration configuration = new Configuration().configure("hibernate.cfg.xml")
             .addAnnotatedClass(Users.class)
-            .addAnnotatedClass(Animal.class);
+            .addAnnotatedClass(Animal.class)
+            .addAnnotatedClass(Location.class);
 
     @Override
     public boolean linkedWithAnimal(String userIdForDeleteParameter){

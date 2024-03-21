@@ -15,5 +15,9 @@
         <property name="show_sql">true</property> <!-- Show SQL in console -->
         <property name="format_sql">true</property> <!-- Show SQL formatted -->
 
+        <mapping class="models.ForAreas.Area"/>
+        <mapping class="models.ForAreaPoints.AreaPoints"/>
+        <mapping class="models.ForAreaAndPoints.AreaAndPoints"/>
+
     </session-factory>
 </hibernate-configuration>

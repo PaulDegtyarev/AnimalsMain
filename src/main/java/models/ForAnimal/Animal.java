@@ -8,6 +8,7 @@ import models.ForUsers.Users;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.util.Set;
 
 @Entity(name="Animal")
 @Table(name = "animal", schema = "animals")
@@ -41,13 +42,9 @@ public class Animal implements Serializable {
     @JoinColumn(name = "chipperid", referencedColumnName = "id")
     public Users chipperid;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "animal_location",
-            joinColumns = @JoinColumn(name = "animal_id"),
-            inverseJoinColumns = @JoinColumn(name = "location_id")
-    )
-    public Set<Location> chippinglocations;
+    @ManyToOne
+    @JoinColumn(name = "chippinglocationid", referencedColumnName = "id")
+    public Location chippinglocationid;
 
 
     @Column(name = "visitedLocations")

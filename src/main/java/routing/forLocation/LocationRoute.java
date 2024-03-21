@@ -17,9 +17,9 @@ import static java.lang.System.out;
 
 public class LocationRoute {
 
-    private UsersManagerService usersManagerService;
+    private final UsersManagerService usersManagerService;
 
-    private LocationManagerService locationManagerService;
+    private final LocationManagerService locationManagerService;
     private Router locationRouter;
     private Vertx vertx;
 

@@ -7,9 +7,10 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import models.ForAnimal.Animal;
+import models.ForAreaPoints.AreaPoints;
 import models.ForLocation.Location;
 import models.ForPointsVisitedByAnimal.PointsVisitedByAnimal;
-import models.ForZonePoints.ZonePoints;
+import models.ForUsers.Users;
 import org.hibernate.Session;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
@@ -31,15 +32,16 @@ public class LocationManagerServiceImpl implements LocationManagerService {
     Configuration configuration = new Configuration().configure("hibernate.cfg.xml")
             .addAnnotatedClass(Location.class)
             .addAnnotatedClass(PointsVisitedByAnimal.class)
-            .addAnnotatedClass(ZonePoints.class)
-            .addAnnotatedClass(Animal.class);
+            .addAnnotatedClass(AreaPoints.class)
+            .addAnnotatedClass(Animal.class)
+            .addAnnotatedClass(Users.class);
 
     @Override
     public boolean linkedWithAnimal(Integer locationIdForDelete){
         Session session = configuration.buildSessionFactory().openSession();
         session.beginTransaction();
 
-        Query queryToCheckLindkWithAnimal = session.createQuery("FROM Animal WHERE chippinglocationid = :locationIdForDelete");
+        Query queryToCheckLindkWithAnimal = session.createQuery("FROM Animal WHERE chippinglocationid.id = :locationIdForDelete");
         queryToCheckLindkWithAnimal.setParameter("locationIdForDelete", locationIdForDelete);
 
         List<Animal> listToCheckLindkWithAnimal = queryToCheckLindkWithAnimal.list();
@@ -60,7 +62,7 @@ public class LocationManagerServiceImpl implements LocationManagerService {
         queryToCheckChippingOrNot.setParameter("latitude", latitude);
         queryToCheckChippingOrNot.setParameter("longitude", longitude);
 
-        List<ZonePoints> listToCheckChippingOrNot = queryToCheckChippingOrNot.list();
+        List<AreaPoints> listToCheckChippingOrNot = queryToCheckChippingOrNot.list();
         out.println(listToCheckChippingOrNot);
 
         //true
@@ -185,9 +187,9 @@ public class LocationManagerServiceImpl implements LocationManagerService {
 
         if (l.isPresent()){
             JsonObject locationInfoJson = JsonObject.mapFrom(l.get());
-            locationInfoJson.remove("id");
-            locationInfoJson.remove("latitude");
-            locationInfoJson.remove("longitude");
+            locationInfoJson.remove("locationId");
+            locationInfoJson.remove("locationLatitude");
+            locationInfoJson.remove("locationLongitude");
             resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(locationInfoJson)));
         }
     }

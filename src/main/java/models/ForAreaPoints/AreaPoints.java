@@ -1,16 +1,18 @@
-package models.ForZonePoints;
+package models.ForAreaPoints;
 
 import io.vertx.codegen.annotations.Fluent;
 import jakarta.persistence.*;
+import models.ForAreas.Area;
 
 import java.io.Serializable;
+import java.util.Set;
 
-@Entity(name = "ZonePoints")
-@Table(name = "zone_points", schema = "animals")
-public class ZonePoints implements Serializable {
+@Entity(name = "AreaPoints")
+@Table(name = "area_points", schema = "animals")
+public class AreaPoints implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Integer area_point_id;
 
     @Column(name = "latitude")
     private Double latitude;
@@ -19,7 +21,7 @@ public class ZonePoints implements Serializable {
     private Double longitude;
 
 
-    @Fluent public Integer getId(){return this.id;}
+    @Fluent public Integer getId(){return this.area_point_id;}
 
     @Fluent public void setLatitude(Double latitude){this.latitude = latitude;}
     public Double getLatitude(){return this.latitude;}
