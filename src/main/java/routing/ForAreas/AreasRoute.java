@@ -87,7 +87,10 @@ public class AreasRoute {
             if (bufferAsyncResult.succeeded()){
                 JsonObject infoAboutNewArea = new JsonObject(bufferAsyncResult.result());
 
-                areasManagerService.validateData(infoAboutNewArea);
+                // Если пересечется true
+                boolean notValidate = areasManagerService.validateData(infoAboutNewArea);
+                out.println(notValidate);
+
 
             }
         });
