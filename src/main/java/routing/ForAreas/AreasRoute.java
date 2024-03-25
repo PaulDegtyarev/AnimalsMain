@@ -1,6 +1,7 @@
 package routing.ForAreas;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -9,8 +10,6 @@ import io.vertx.ext.web.api.service.ServiceResponse;
 import services.ForAreas.AreasManagerService;
 import services.forUsers.UsersManagerService;
 
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import static java.lang.System.out;
 
@@ -40,6 +39,8 @@ public class AreasRoute {
         areasRouter.get("/areas/").handler(this::getAreaById);
 
         areasRouter.post("/areas").handler(this::addArea);
+
+        areasRouter.put("/areas/:areaId").handler(this::updateAreaById);
     }
 
     private void getAreaById(RoutingContext routingContext) {
@@ -86,11 +87,83 @@ public class AreasRoute {
         routingContext.request().body().onComplete(bufferAsyncResult ->{
             if (bufferAsyncResult.succeeded()){
                 JsonObject infoAboutNewArea = new JsonObject(bufferAsyncResult.result());
+                String userToken = routingContext.request().getHeader("token");
 
                 // Если пересечется true
                 boolean notValidate = areasManagerService.validateData(infoAboutNewArea);
                 out.println(notValidate);
 
+//                boolean areasAreConflict = areasManagerService.checkConflictBetweenNewAreaAndAvailableAreas(infoAboutNewArea);
+//                out.println(areasAreConflict);
+
+                if (notValidate){
+                    routingContext.response().setStatusCode(400).end();
+                    return;
+                }
+
+                boolean isAuthorize = usersManagerService.checkUserToAuthorize(userToken);
+
+                if (!isAuthorize){
+                    routingContext.response().setStatusCode(401).end();
+                    return;
+                }
+
+                String userRole = usersManagerService.checkRole(userToken);
+                if (!userRole.equals("ADMIN")){
+                    routingContext.response().setStatusCode(403).end();
+                    return;
+                }
+
+                boolean areaIsBusy = areasManagerService.checkAreaIsBusy(infoAboutNewArea);
+                if (areaIsBusy){
+                    routingContext.response().setStatusCode(409).end();
+                    return;
+                }
+
+                else areasManagerService.addNewArea(infoAboutNewArea, request, resultHandler ->{
+                        if (resultHandler.succeeded()){
+                            ServiceResponse response = resultHandler.result();
+                            routingContext.response().setStatusCode(201).end(response.getPayload().toString());
+                        }
+                });
+            }
+        });
+    }
+
+    private void updateAreaById(RoutingContext routingContext) {
+        routingContext.request().body().onComplete(bufferAsyncResult -> {
+            if (bufferAsyncResult.succeeded()){
+                String areaIdForUpdateParam = routingContext.pathParam("areaId");
+                JsonObject updateInfoAboutArea = new JsonObject(bufferAsyncResult.result());
+                String userToken = routingContext.request().getHeader("token");
+
+                boolean idIsValid = usersManagerService.checkAccountId(areaIdForUpdateParam);
+                boolean dataNotValidate = areasManagerService.validateData(updateInfoAboutArea);
+
+                if (!idIsValid || dataNotValidate){
+                    routingContext.response().setStatusCode(400).end();
+                    return;
+                }
+
+                boolean isAuthorize = usersManagerService.checkUserToAuthorize(userToken);
+                if (!isAuthorize){
+                    routingContext.response().setStatusCode(401).end();
+                    return;
+                }
+
+                String userRole = usersManagerService.checkRole(userToken);
+                if (!userRole.equals("ADMIN")){
+                    routingContext.response().setStatusCode(403).end();
+                    return;
+                }
+
+                boolean areaIsBusy = areasManagerService.checkAreaIsBusy(updateInfoAboutArea);
+                if (areaIsBusy){
+                    routingContext.response().setStatusCode(409).end();
+                    return;
+                }
+
+                else areasManagerService.
 
             }
         });

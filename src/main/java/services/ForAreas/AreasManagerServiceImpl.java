@@ -7,15 +7,16 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
+import models.ForAreaAndPoints.AreaAndPoints;
+import models.ForAreaPoints.AreaPoints;
 import models.ForAreas.Area;
 import org.hibernate.Session;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
 import persistance.ForAreas.AreasPersistance;
 
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 public class AreasManagerServiceImpl implements AreasManagerService {
     private final AreasPersistance areasPersistance;
@@ -25,7 +26,9 @@ public class AreasManagerServiceImpl implements AreasManagerService {
     }
 
     Configuration configuration = new Configuration().configure("hibernate.cfg.xml")
-            .addAnnotatedClass(Area.class);
+            .addAnnotatedClass(Area.class)
+            .addAnnotatedClass(AreaPoints.class)
+            .addAnnotatedClass(AreaAndPoints.class);
 
     public static class Vector2 {
         public double x;
@@ -81,6 +84,7 @@ public class AreasManagerServiceImpl implements AreasManagerService {
             return true;
         }
 
+
         JsonArray coords = data.getJsonArray("areaPoints");
         if (coords.size() < 3) {
             return true;
@@ -119,14 +123,94 @@ public class AreasManagerServiceImpl implements AreasManagerService {
             }
         }
 
+        Set<String> pointSet = new HashSet<>();
+        for (Object point : coords){
+            JsonObject jsonPoint = (JsonObject) point;
+            String coordinateKey = jsonPoint.getDouble("latitude") + ":" + jsonPoint.getDouble("longitude");
+            if (!pointSet.add(coordinateKey)) return true;
+        }
+
         // Возвращает false, если не пересекается
         return false;
     }
 
+    @Override
+    public boolean checkAreaIsBusy(JsonObject infoAboutnewArea){
+        String newName = infoAboutnewArea.getString("name");
+        Double newLongitude = infoAboutnewArea.getDouble("longitude");
+        Double newLatitude = infoAboutnewArea.getDouble("latitude");
+
+        Session session = configuration.buildSessionFactory().openSession();
+        session.beginTransaction();
+
+        Query queryToCheckAreaIsBusy = session.createQuery("FROM AreaAndPoints aap join aap.area_id a join aap.area_point_id ap where (ap.latitude = :newLatitude and ap.longitude = :newLongitude) or a.name = :newName")
+                .setParameter("newLatitude", newLatitude)
+                .setParameter("newLongitude", newLongitude)
+                .setParameter("newName", newName);
+
+        List<AreaAndPoints> listToCheckAreaIsBusy = queryToCheckAreaIsBusy.list();
+
+        session.getTransaction().commit();
+        session.close();
+
+        return !listToCheckAreaIsBusy.isEmpty();
+    }
 
 
+//    //Для отношения новой и имеющихся зон
+//    @Override
+//    public boolean checkConflictBetweenNewAreaAndAvailableAreas(JsonObject infoAboutNewArea){
+//        JsonArray areaPoints = infoAboutNewArea.getJsonArray("areaPoints");
+//        double newLatitude = areaPoints.getJsonObject(0).getDouble("latitude");
+//        double newLongitude = areaPoints.getJsonObject(0).getDouble("longitude");
+//
+//        Session session = configuration.buildSessionFactory().openSession();
+//
+//        session.beginTransaction();
+//
+//        Query queryToGetAvailableAreas = session.createQuery("FROM AreaPoints");
+//
+//        List<AreaPoints> listWithAvailableAreas = queryToGetAvailableAreas.list();
+//
+//
+//        for (AreaPoints existingArea : listWithAvailableAreas){
+//            String wkt1 = "POLYGON((" + existingArea.toString() + "))";
+//            String wkt2 = getPolygonFromAreaPoints(areaPoints);
+//
+//            Query queryToCheckIntersection = session.createQuery("SELECT ST_Intersects(ST_GeomFromText(:wkt1, 4326), ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326))")
+//                    .setParameter("wkt1", wkt1)
+//                    .setParameter("longitude", newLongitude)
+//                    .setParameter("latitude", newLatitude);
+//
+//            boolean isIntersected = (boolean) queryToCheckIntersection.uniqueResult();
+//            if (isIntersected) {
+//                session.close();
+//                return true;
+//            }
+//
+//        }
+//        session.close();
+//        return false;
+//    }
 
-@Override
+//    private String getPolygonFromAreaPoints(JsonArray areaPoints) {
+//        StringBuilder polygonBuilder = new StringBuilder();
+//
+//        for (int i = 0; i < areaPoints.size(); i++) {
+//            double latitude = areaPoints.getJsonObject(i).getDouble("latitude");
+//            double longitude = areaPoints.getJsonObject(i).getDouble("longitude");
+//            polygonBuilder.append(longitude).append(" ").append(latitude);
+//
+//            if (i < areaPoints.size() - 1) {
+//                polygonBuilder.append(",");
+//            }
+//        }
+//
+//        return "POLYGON((" + polygonBuilder.toString() + "))";
+//    }
+
+
+    @Override
     public boolean checkArea(Integer areaId){
 
         Session session = configuration.buildSessionFactory().openSession();
@@ -154,5 +238,24 @@ public class AreasManagerServiceImpl implements AreasManagerService {
             JsonObject areaJson = JsonObject.mapFrom(a.get());
             resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(areaJson)));
         }
+    }
+    @Override
+    public void addNewArea(JsonObject infoAboutNewArea,
+                           ServiceRequest request,
+                           Handler<AsyncResult<ServiceResponse>> resultHandler){
+        Optional<JsonObject> a = areasPersistance.addNewArea(infoAboutNewArea);
+
+        if (a.isPresent()){
+            JsonObject areaJson = JsonObject.mapFrom(a.get());
+            resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(areaJson)));
+        }
+    }
+
+    @Override
+    public void updateAreaById(Integer areaIdForUpdate,
+                               JsonObject updateInfoAboutArea,
+                               ServiceRequest request,
+                               Handler<AsyncResult<ServiceResponse>> resultHandler){
+        Optional<JsonObject> a = areasPersistance.
     }
 }

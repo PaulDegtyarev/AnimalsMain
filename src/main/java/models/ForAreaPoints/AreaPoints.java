@@ -31,7 +31,7 @@ public class AreaPoints implements Serializable {
 
     @Override
     public String toString(){
-        return String.valueOf(this.getId() + this.getLatitude() + this.getLongitude());
+        return String.valueOf( this.getLatitude() + this.getLongitude());
     }
 
 }

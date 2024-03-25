@@ -12,6 +12,11 @@ public interface AreasManagerService {
         return new AreasManagerServiceImpl(areasPersistance);
     }
 
+    //Для отношения новой и имеющихся зон
+//    boolean checkConflictBetweenNewAreaAndAvailableAreas(JsonObject infoAboutNewArea);
+
+    boolean checkAreaIsBusy(JsonObject infoAboutnewArea);
+
     boolean checkArea(Integer areaId);
 
     void getAreaById(Integer areaId,
@@ -20,4 +25,7 @@ public interface AreasManagerService {
 
     boolean validateData(JsonObject data);
 
+    void addNewArea(JsonObject infoAboutNewArea,
+                    ServiceRequest request,
+                    Handler<AsyncResult<ServiceResponse>> resultHandler);
 }

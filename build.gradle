@@ -50,6 +50,8 @@ dependencies {
 
     implementation 'com.google.code.gson:gson:2.8.7'
 
+    implementation 'net.postgis:postgis-jdbc:2023.1.0'
+
 }
 
 test {
