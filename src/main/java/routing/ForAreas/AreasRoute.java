@@ -158,12 +158,18 @@ public class AreasRoute {
                 }
 
                 boolean areaIsBusy = areasManagerService.checkAreaIsBusy(updateInfoAboutArea);
+                Integer areaIdForUpdate = Integer.parseInt(areaIdForUpdateParam);
                 if (areaIsBusy){
                     routingContext.response().setStatusCode(409).end();
                     return;
                 }
 
-                else areasManagerService.
+                else areasManagerService.updateAreaById(areaIdForUpdate, updateInfoAboutArea, request, resultHandler ->{
+                    if (resultHandler.succeeded()){
+                        ServiceResponse response = resultHandler.result();
+                        routingContext.response().setStatusCode(200).end(response.getPayload().toString());
+                    }
+                });
 
             }
         });

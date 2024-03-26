@@ -9,18 +9,18 @@ import org.hibernate.Session;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 
-public class AreasPersistanceImpl implements AreasPersistance{
+import static java.lang.System.out;
+
+public class AreasPersistanceImpl implements AreasPersistance {
     Configuration configuration = new Configuration().configure("hibernate.cfg.xml")
             .addAnnotatedClass(Area.class)
             .addAnnotatedClass(AreaAndPoints.class);
 
     @Override
-    public Optional<JsonObject> getAreaById(Integer areaId){
+    public Optional<JsonObject> getAreaById(Integer areaId) {
         JsonObject areaJson = new JsonObject();
         Session session = configuration.buildSessionFactory().openSession();
         session.beginTransaction();
@@ -94,7 +94,7 @@ public class AreasPersistanceImpl implements AreasPersistance{
     }
 
     @Override
-    public Optional<JsonObject> updateAreaById(Integer idForUpdate, JsonObject updateInfoAboutArea){
+    public Optional<JsonObject> updateAreaById(Integer idForUpdate, JsonObject updateInfoAboutArea) {
         JsonObject finalJson = new JsonObject();
 
         Session session = configuration.buildSessionFactory().openSession();
@@ -104,66 +104,37 @@ public class AreasPersistanceImpl implements AreasPersistance{
         area.setName(updateInfoAboutArea.getString("name"));
         session.update(area);
 
-        Query queryToGetAreaForUpdate = session.createQuery("FROM AreaAndPoints aap WHERE aap.area_id = :idForUpdate")
-                .setParameter("idForUpdate", updateInfoAboutArea);
+        JsonArray areaPointsJsonArray = new JsonArray();
+        JsonArray updateAreaPoints = updateInfoAboutArea.getJsonArray("areaPoints");
 
+        Query queryToGetAreaForUpdate = session.createQuery("FROM AreaAndPoints aap WHERE aap.area_id.id = :idForUpdate")
+                .setParameter("idForUpdate", idForUpdate);
         List<AreaAndPoints> areasAndPoints = queryToGetAreaForUpdate.list();
 
-        for (AreaAndPoints areaAndPoints : areasAndPoints){
-            AreaPoints areaPoint = areaAndPoints.getArea_point_id();
+        for (int i = 0; i < areasAndPoints.size(); i++) {
+            AreaPoints areaPoint = areasAndPoints.get(i).getArea_point_id();
+            JsonObject updatedAreaPointJson = updateAreaPoints.getJsonObject(i);
 
-            JsonArray areaPointsJsonArray = new JsonArray();
-            for (Object element : updateInfoAboutArea.getJsonArray("areaPoints")){
-                JsonObject areaPointJson = (JsonObject) element;
-                if (areaPoint.getId().equals(areaPointJson.getInteger("id"))){
-                    areaPoint.setLatitude(areaPointJson.getDouble("latitude"));
-                    areaPoint.setLongitude(areaPointJson.getDouble("longitude"));
 
-                    session.update(areaPoint);
-                }
+            areaPoint.setLatitude(updatedAreaPointJson.getDouble("latitude"));
+            areaPoint.setLongitude(updatedAreaPointJson.getDouble("longitude"));
+            session.update(areaPoint);
+
+            JsonObject areaPointJson = new JsonObject()
+                            .put("latitude", updatedAreaPointJson.getDouble("latitude"))
+                            .put("longitude", updatedAreaPointJson.getDouble("longitude"));
+
+            areaPointsJsonArray.add(areaPointJson);
+
             }
-        }
+
         session.getTransaction().commit();
         session.close();
 
         finalJson.put("id", area.getId());
         finalJson.put("name", area.getName());
-        finalJson.put("areaPoints", )
+        finalJson.put("areaPoints", areaPointsJsonArray);
 
         return Optional.ofNullable(finalJson);
     }
-}
-
-
-
-@Override
-public Optional<JsonObject> updateAreaById(Integer idForUpdate, JsonObject updateInfoAboutArea) {
-    JsonObject finalJson = new JsonObject();
-    Session session = configuration.buildSessionFactory().openSession();
-    session.beginTransaction();
-
-    Area area = session.get(Area.class, idForUpdate);
-    area.setName(updateInfoAboutArea.getString("name"));
-    session.update(area);
-
-    JsonArray areaPointsJsonArray = new JsonArray();
-    for (Object element : updateInfoAboutArea.getJsonArray("areaPoints")) {
-        JsonObject areaPointJson = (JsonObject) element;
-        AreaPoints areaPoint = session.get(AreaPoints.class, areaPointJson.getInteger("id"));
-        if (areaPoint != null) {
-            areaPoint.setLatitude(areaPointJson.getDouble("latitude"));
-            areaPoint.setLongitude(areaPointJson.getDouble("longitude"));
-            session.update(areaPoint);
-            areaPointsJsonArray.add(areaPointJson);
-        }
-    }
-
-    session.getTransaction().commit();
-    session.close();
-
-    finalJson.put("id", area.getId());
-    finalJson.put("name", area.getName());
-    finalJson.put("areaPoints", areaPointsJsonArray);
-
-    return Optional.of(finalJson);
 }

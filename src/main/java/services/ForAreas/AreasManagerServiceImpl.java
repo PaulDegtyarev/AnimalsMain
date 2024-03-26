@@ -18,6 +18,8 @@ import persistance.ForAreas.AreasPersistance;
 import java.util.*;
 import java.util.List;
 
+import static java.lang.System.out;
+
 public class AreasManagerServiceImpl implements AreasManagerService {
     private final AreasPersistance areasPersistance;
 
@@ -256,6 +258,10 @@ public class AreasManagerServiceImpl implements AreasManagerService {
                                JsonObject updateInfoAboutArea,
                                ServiceRequest request,
                                Handler<AsyncResult<ServiceResponse>> resultHandler){
-        Optional<JsonObject> a = areasPersistance.
+        Optional<JsonObject> a = areasPersistance.updateAreaById(areaIdForUpdate, updateInfoAboutArea);
+        if (a.isPresent()){
+            JsonObject areaResultJson = JsonObject.mapFrom(a.get());
+            resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(areaResultJson)));
+        }
     }
 }

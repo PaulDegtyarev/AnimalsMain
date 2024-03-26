@@ -28,4 +28,9 @@ public interface AreasManagerService {
     void addNewArea(JsonObject infoAboutNewArea,
                     ServiceRequest request,
                     Handler<AsyncResult<ServiceResponse>> resultHandler);
+
+    void updateAreaById(Integer areaIdForUpdate,
+                        JsonObject updateInfoAboutArea,
+                        ServiceRequest request,
+                        Handler<AsyncResult<ServiceResponse>> resultHandler);
 }
