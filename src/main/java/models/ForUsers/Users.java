@@ -125,5 +125,4 @@ public class Users implements Serializable {
         return this.getId() + this.getFirstName() + this.getLastName() + this.getEmail() + this.getRole();
 
     }
-
 }

@@ -19,5 +19,9 @@
         <mapping class="models.ForAreaPoints.AreaPoints"/>
         <mapping class="models.ForAreaAndPoints.AreaAndPoints"/>
 
+        <mapping class="models.ForTypes.Types"/>
+        <mapping class="models.ForAnimal.Animal"/>
+
+
     </session-factory>
 </hibernate-configuration>

@@ -33,4 +33,8 @@ public interface AreasManagerService {
                         JsonObject updateInfoAboutArea,
                         ServiceRequest request,
                         Handler<AsyncResult<ServiceResponse>> resultHandler);
+
+    void deleteAreaById(Integer areaId,
+                        ServiceRequest request,
+                        Handler<AsyncResult<ServiceResponse>> resultHandler);
 }

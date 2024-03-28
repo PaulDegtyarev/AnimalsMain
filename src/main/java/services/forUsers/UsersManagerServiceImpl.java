@@ -8,7 +8,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import models.ForAnimal.Animal;
+
 import models.ForLocation.Location;
+import models.ForTypes.Types;
 import models.ForUsers.Users;
 import org.hibernate.Session;
 import org.hibernate.cfg.Configuration;
@@ -129,9 +131,7 @@ public class UsersManagerServiceImpl implements UsersManagerService {
 
     @Override
     public boolean checkUserToAuthorize(String userToken){
-        Session session = configuration
-                .buildSessionFactory()
-                .openSession();
+        Session session = configuration.buildSessionFactory().openSession();
         session.beginTransaction();
 
         Query queryToCheckAuthorize = session.createQuery("FROM Users where usertoken = :userToken");

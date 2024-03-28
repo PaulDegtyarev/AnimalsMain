@@ -3,13 +3,16 @@ import io.vertx.ext.web.Router;
 
 import persistance.ForAreas.AreasPersistance;
 import persistance.ForLocation.LocationPersistence;
+import persistance.ForTypes.TypesPersistance;
 import persistance.forUsers.UsersPersistence;
 import routing.ForAreas.AreasRoute;
+import routing.ForTypes.TypeRoute;
 import routing.forLocation.LocationRoute;
 
 import routing.forUsers.RegistrationRoute;
 import routing.forUsers.UsersRoute;
 import services.ForAreas.AreasManagerService;
+import services.ForTypes.TypesManagerService;
 import services.forLocation.LocationManagerService;
 import services.forUsers.UsersManagerService;
 
@@ -34,10 +37,15 @@ public class AnimalsMain {
         AreasManagerService areasManagerService = AreasManagerService.create(areasPersistance);
         AreasRoute areasRoute = new AreasRoute(areasManagerService, usersManagerService, vertx);
 
+        TypesPersistance typesPersistance = TypesPersistance.create();
+        TypesManagerService typesManagerService = TypesManagerService.create(typesPersistance);
+        TypeRoute typesRoute = new TypeRoute(typesManagerService, usersManagerService, vertx);
+
         mainRouter.route("/*").subRouter(usersRoute.getRouter());
         mainRouter.route("/*").subRouter(locationRoute.getRouter());
         mainRouter.route("/*").subRouter(registrationRoute.getRouter());
         mainRouter.route("/*").subRouter(areasRoute.getRouter());
+        mainRouter.route("/*").subRouter(typesRoute.getTypesRouter());
 
         vertx.createHttpServer().requestHandler(mainRouter).listen(8080, http -> {
             if (http.succeeded()) out.println("server start on port 8080");

@@ -18,8 +18,6 @@ import persistance.ForAreas.AreasPersistance;
 import java.util.*;
 import java.util.List;
 
-import static java.lang.System.out;
-
 public class AreasManagerServiceImpl implements AreasManagerService {
     private final AreasPersistance areasPersistance;
 
@@ -139,23 +137,33 @@ public class AreasManagerServiceImpl implements AreasManagerService {
     @Override
     public boolean checkAreaIsBusy(JsonObject infoAboutnewArea){
         String newName = infoAboutnewArea.getString("name");
-        Double newLongitude = infoAboutnewArea.getDouble("longitude");
-        Double newLatitude = infoAboutnewArea.getDouble("latitude");
+        JsonArray areaPoints = infoAboutnewArea.getJsonArray("areaPoints");
+
+        List<Double> newLatitudes = new ArrayList<>();
+        List<Double> newLongitudes = new ArrayList<>();
+
+        for (int i = 0; i < areaPoints.size(); i++){
+            JsonObject point = areaPoints.getJsonObject(i);
+            if (i != 0){
+                newLatitudes.add(point.getDouble("latitude"));
+                newLongitudes.add(point.getDouble("longitude"));
+            }
+        }
 
         Session session = configuration.buildSessionFactory().openSession();
         session.beginTransaction();
 
-        Query queryToCheckAreaIsBusy = session.createQuery("FROM AreaAndPoints aap join aap.area_id a join aap.area_point_id ap where (ap.latitude = :newLatitude and ap.longitude = :newLongitude) or a.name = :newName")
-                .setParameter("newLatitude", newLatitude)
-                .setParameter("newLongitude", newLongitude)
+        Query queryToCheckAreaIsBusy = session.createQuery("SELECT aap.area_id FROM AreaAndPoints aap JOIN aap.area_id a JOIN aap.area_point_id ap WHERE (ap.latitude in :newLatitudes and ap.longitude in :newLongitudes) or a.name = :newName")
+                .setParameter("newLatitudes", newLatitudes)
+                .setParameter("newLongitudes", newLongitudes)
                 .setParameter("newName", newName);
 
-        List<AreaAndPoints> listToCheckAreaIsBusy = queryToCheckAreaIsBusy.list();
+        List<Object[]> existingAreaPoints = queryToCheckAreaIsBusy.list();
 
         session.getTransaction().commit();
         session.close();
 
-        return !listToCheckAreaIsBusy.isEmpty();
+        return !existingAreaPoints.isEmpty();
     }
 
 
@@ -262,6 +270,18 @@ public class AreasManagerServiceImpl implements AreasManagerService {
         if (a.isPresent()){
             JsonObject areaResultJson = JsonObject.mapFrom(a.get());
             resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(areaResultJson)));
+        }
+    }
+
+    @Override
+    public void deleteAreaById(Integer areaId,
+                               ServiceRequest request,
+                               Handler<AsyncResult<ServiceResponse>> resultHandler){
+        Optional<JsonObject> a = areasPersistance.deleteAreaById(areaId);
+        if (a.isPresent()) {
+            JsonObject finalJson = JsonObject.mapFrom(a.get());
+            finalJson.remove("name");
+            resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(finalJson)));
         }
     }
 }

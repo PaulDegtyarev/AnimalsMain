@@ -41,6 +41,10 @@ public class AreasRoute {
         areasRouter.post("/areas").handler(this::addArea);
 
         areasRouter.put("/areas/:areaId").handler(this::updateAreaById);
+        areasRouter.put("/areas/").handler(this::updateAreaById);
+
+        areasRouter.delete("/areas/:areaId").handler(this::deleteAreaById);
+        areasRouter.delete("/areas/").handler(this::deleteAreaById);
     }
 
     private void getAreaById(RoutingContext routingContext) {
@@ -171,6 +175,48 @@ public class AreasRoute {
                     }
                 });
 
+            }
+        });
+    }
+
+    private void deleteAreaById(RoutingContext routingContext) {
+        routingContext.request().body().onComplete(bufferAsyncResult -> {
+            if (bufferAsyncResult.succeeded()){
+                String areaIdParam = routingContext.pathParam("areaId");
+                String userToken = routingContext.request().getHeader("token");
+
+                boolean idIsValid = usersManagerService.checkAccountId(areaIdParam);
+
+                if (!idIsValid){
+                    routingContext.response().setStatusCode(400).end();
+                    return;
+                }
+
+                boolean isAuthorize = usersManagerService.checkUserToAuthorize(userToken);
+                if (!isAuthorize) {
+                    routingContext.response().setStatusCode(401).end();
+                    return;
+                }
+
+                String userRole = usersManagerService.checkRole(userToken);
+                if (!userRole.equals("ADMIN")) {
+                    routingContext.response().setStatusCode(403).end();
+                    return;
+                }
+
+                Integer areaId = Integer.parseInt(areaIdParam);
+                boolean notFound = areasManagerService.checkArea(areaId);
+                if (notFound) {
+                    routingContext.response().setStatusCode(404).end();
+                    return;
+                }
+
+                else areasManagerService.deleteAreaById(areaId, request, resultHandler ->{
+                    if (resultHandler.succeeded()) {
+                        ServiceResponse response = resultHandler.result();
+                        routingContext.response().setStatusCode(200).end(response.getPayload().toString());
+                    }
+                });
             }
         });
     }

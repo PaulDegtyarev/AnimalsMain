@@ -12,8 +12,6 @@ import org.hibernate.query.Query;
 import java.util.List;
 import java.util.Optional;
 
-import static java.lang.System.out;
-
 public class AreasPersistanceImpl implements AreasPersistance {
     Configuration configuration = new Configuration().configure("hibernate.cfg.xml")
             .addAnnotatedClass(Area.class)
@@ -134,6 +132,31 @@ public class AreasPersistanceImpl implements AreasPersistance {
         finalJson.put("id", area.getId());
         finalJson.put("name", area.getName());
         finalJson.put("areaPoints", areaPointsJsonArray);
+
+        return Optional.ofNullable(finalJson);
+    }
+
+    @Override
+    public Optional<JsonObject> deleteAreaById(Integer areaId){
+        JsonObject finalJson = new JsonObject();
+        Session session = configuration.buildSessionFactory().openSession();
+        session.beginTransaction();
+
+        Query getAreaAndPoints = session.createQuery("from AreaAndPoints aap JOIN aap.area_id a JOIN aap.area_point_id ap WHERE a.area_id = :areaId")
+                .setParameter("areaId", areaId);
+
+        List<AreaAndPoints> areaAndPointsList = getAreaAndPoints.list();
+
+        for (AreaAndPoints areaAndPoints : areaAndPointsList){
+            session.delete(areaAndPoints);
+        }
+
+        Area areaForDelete = session.get(Area.class, areaId);
+        finalJson.put("name",areaForDelete.getName());
+        session.delete(areaForDelete);
+
+        session.getTransaction().commit();
+        session.close();
 
         return Optional.ofNullable(finalJson);
     }

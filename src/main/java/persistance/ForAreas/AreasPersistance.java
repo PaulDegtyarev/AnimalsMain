@@ -13,4 +13,6 @@ public interface AreasPersistance {
     Optional<JsonObject> addNewArea(JsonObject infoAboutNewArea);
 
     Optional<JsonObject> updateAreaById(Integer idForUpdate, JsonObject updateInfoAboutArea);
+
+    Optional<JsonObject> deleteAreaById(Integer areaId);
 }

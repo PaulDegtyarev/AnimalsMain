@@ -2,12 +2,14 @@ package models.ForAnimal;
 
 
 import jakarta.persistence.*;
+import models.ForAreas.Area;
 import models.ForLocation.Location;
 import models.ForUsers.Users;
 
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity(name="Animal")
@@ -15,10 +17,8 @@ import java.util.Set;
 public class Animal implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(nullable = false)
     private Integer id;
-
-    @Column(name = "animaltypes")
-    public BigInteger[] animaltypes;
 
     @Column(name = "weight")
     public Float weight;
@@ -43,22 +43,22 @@ public class Animal implements Serializable {
     public Users chipperid;
 
     @ManyToOne
-    @JoinColumn(name = "chippinglocationid", referencedColumnName = "id")
-    public Location chippinglocationid;
-
-
-    @Column(name = "visitedLocations")
-    public BigInteger[] visitedlocations;
+    @JoinColumn(name = "chippinglocationid", referencedColumnName = "area_id")
+    public Area chippinglocationid;
 
     @Column(name = "deathdatetime")
     public Timestamp deathdatetime;
 
+    @ManyToMany
+    @JoinTable(name = "AnimalType",
+            joinColumns = {@JoinColumn(name = "animal_id")},
+            inverseJoinColumns = { @JoinColumn(name = "type_id")})
+    @Column(insertable=false, updatable=false)
+    private Set<Animal> animals = new HashSet<>();
+
 
     public Integer getId(){
         return id;
-    }
-    public BigInteger[] getAnimaltypes(){
-        return animaltypes;
     }
 
     public Float getWeight(){
@@ -87,14 +87,6 @@ public class Animal implements Serializable {
 
     public Users getChipperid() {
         return chipperid;
-    }
-
-    public Location getChippingLocationId() {
-        return chippinglocationid;
-    }
-
-    public BigInteger[] getVisitedlocations() {
-        return visitedlocations;
     }
 
     public Timestamp getDeathDateTime() {
